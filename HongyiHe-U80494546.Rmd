@@ -1,0 +1,87 @@
+---
+title: "Assignment4"
+author: Hongyi He
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+#####12.6.1 Exercises
+```{r}
+who1 <- who %>% gather(new_sp_m014:newrel_f65,key="key",value ="case", na.rm = T) 
+
+who2 <- who1 %>% mutate(key=stringr::str_replace(key,"newrel","new_rel"))
+
+who3 <- who2 %>% 
+separate(key,c("new","type","sexage"),sep = "_")
+
+who4 <- who3 %>% select(-new,-iso2,-iso3)
+
+who5 <- who4 %>% separate(sexage,c("sex","age"),sep=1)
+
+```
+
+## 3.I claimed that iso2 and iso3 were redundant with country. Confirm this claim.
+```{r}
+select(who3,country,iso2,iso3) %>%
+distinct() %>% 
+group_by(country) %>% 
+filter(n() >1)
+  
+```
+
+## 4.For each country, year, and sex compute the total number of cases of TB. Make an informative visualisation of the data.
+```{r,fig.height=6}
+who5 %>% group_by(country,year,sex) %>% 
+filter(year>1995) %>% 
+summarise(case=sum(case)) %>% 
+unite(country_sex,country,sex,remove=FALSE) %>% 
+ggplot(aes(x = year,y = case, group = country_sex,colour = sex)) + geom_line()
+
+```
+
+2) 
+enframe() converts named atomic vectors or lists to two-column data frames.
+```{r}
+x <- c(1:10)
+enframe(x)
+```
+
+## table 4-6
+```{r}
+table4 <- readRDS("raw4.RDS")
+
+data4 <- as.tibble(table4)
+
+data41 <- data4 %>% gather(key = "income",value = "freq",-religion)
+
+data42 <- data41 %>% arrange(religion)
+
+data42
+
+```
+
+## table 7-8
+```{r}
+bill <- read.csv("billboard.csv")
+
+bill <- as.tibble(bill)
+
+bill1 <- bill %>% gather(key="week",value = "rank",-year,-artist.inverted,-track,-time,-genre,-date.entered,-date.peaked)
+
+bill2 <- bill1 %>% select(year,artist=artist.inverted,time,track,date=date.entered,week,rank)
+
+bill3 <- bill2 %>% arrange(artist)
+
+bill4 <- bill3 %>% filter(!is.na(rank))
+
+bill5 <- bill4 %>% separate(week,into=c("A","B","C"),sep=c(1,-7),convert = T)
+
+bill6 <- bill5 %>% select(-C,-A) %>% rename(week=B)
+
+bill7 <- bill6 %>% mutate(date=as.Date(date)+(week-1)*7)
+
+bill7
+```
